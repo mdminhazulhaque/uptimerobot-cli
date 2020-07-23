@@ -43,7 +43,7 @@ $ urctl list
 ### Add
 
 ```
-$ urctl add -u https://api.example.sg -n 'SG Backend' -i 6000
+$ urctl add -u https://api.example.sg -n 'SG Backend' -i 600
 785618400
 
 $ urctl list

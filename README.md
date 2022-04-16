@@ -32,7 +32,7 @@ Commands:
 ### List
 
 ```
-$ urctl list
+$ uptimerobot list
 |        id | friendly_name    | url                        |   interval |
 |-----------|------------------|----------------------------|------------|
 | 785618397 | MY Frontend      | https://origin.example.com |        300 |
@@ -43,10 +43,10 @@ $ urctl list
 ### Add
 
 ```
-$ urctl add -u https://api.example.sg -n 'SG Backend' -i 600
+$ uptimerobot add -u https://api.example.sg -n 'SG Backend' -i 600
 785618400
 
-$ urctl list
+$ uptimerobot list
 |        id | friendly_name    | url                        |   interval |
 |-----------|------------------|----------------------------|------------|
 | 785618397 | MY Frontend      | https://origin.example.com |        300 |
@@ -58,8 +58,8 @@ $ urctl list
 ### Edit
 
 ```
-$ urctl edit -i 785618400 -n 'SG API'
-$ urctl list
+$ uptimerobot edit -i 785618400 -n 'SG API'
+$ uptimerobot list
 |        id | friendly_name    | url                        |   interval |
 |-----------|------------------|----------------------------|------------|
 | 785618397 | MY Frontend      | https://origin.example.com |        300 |
@@ -71,9 +71,9 @@ $ urctl list
 ### Delete
 
 ```
-$ urctl delete -i 785618397
-$ urctl delete -i 785618398
-$ urctl list
+$ uptimerobot delete -i 785618397
+$ uptimerobot delete -i 785618398
+$ uptimerobot list
 |        id | friendly_name    | url                        |   interval |
 |-----------|------------------|----------------------------|------------|
 | 785618399 | SG Frontend      | https://origin.example.sg  |        300 |

@@ -33,14 +33,16 @@ if 'UPTIMEROBOT_API_KEY' not in os.environ:
 UPTIMEROBOT_API_KEY = os.environ['UPTIMEROBOT_API_KEY']
 UPTIMEROBOT_BASE_URL = 'https://api.uptimerobot.com'
 UPTIMEROBOT_HEADERS = {
-        'Cche-Control': "no-cache",
-        'Content-Type': "application/x-www-form-urlencoded"
+      'Cache-Control': 'no-cache',
+      'Content-Type': "application/x-www-form-urlencoded"
     }
 
 UPTIMEROBOT_API_GET_MONITORS = "/v2/getMonitors"
 UPTIMEROBOT_API_NEW_MONITOR = "/v2/newMonitor"
 UPTIMEROBOT_API_EDIT_MONITOR = "/v2/editMonitor"
 UPTIMEROBOT_API_DELETE_MONITOR = "/v2/deleteMonitor"
+UPTIMEROBOT_API_GET_ALERT_CONTACTS = "/v2/getAlertContacts"
+UPTIMEROBOT_API_EDIT_ALERT_CONTACTS = "/v2/editAlertContact"
 UPTIMEROBOT_PAGE_LEN = 50
 
 def _make_request(api_endpoint, payload):
@@ -53,32 +55,38 @@ def _make_request(api_endpoint, payload):
 def app():
     pass
 
-@app.command(help="List all monitors")
+@app.command(help="Get all monitors")
 @click.option('--all', '-a', is_flag=True, default=False, help="Shows all pages")
 @click.option('--offset', '-o', type=click.INT, default=0, help="Offset for pagination")
-def list(all, offset):
+def get_monitors(all, offset):
     payload = {
         'logs': 0,
-        'offset': offset
+        'offset': offset,
+        'alert_contacts': 1,
     }
     _data = []
-    _headers = ['id', 'friendly_name', 'url', 'interval']    
+    _headers = ['id', 'friendly_name', 'url', 'interval', 'alert_contacts']
     while True:
         data = _make_request(UPTIMEROBOT_API_GET_MONITORS, payload)
         if data['stat'] == 'ok':            
             for monitor in data['monitors']:
+                alert_contacts = ",".join(
+                    ac['id'] for ac in monitor['alert_contacts']
+                    #ac['value'].split('@')[0] for ac in monitor['alert_contacts']
+                )
                 _data.append([
                     monitor['id'],
                     monitor['friendly_name'],
                     monitor['url'],
-                    monitor['interval']
+                    monitor['interval'],
+                    alert_contacts
                 ])
             if not all:
                 break
             elif len(data['monitors']) < UPTIMEROBOT_PAGE_LEN:
                 break
             else:
-                payload['offset'] += UPTIMEROBOT_PAGE_LEN    
+                payload['offset'] += UPTIMEROBOT_PAGE_LEN
     print(t(_data, headers=_headers, tablefmt="github"))
 
 @app.command(help="Create a monitor")
@@ -86,7 +94,7 @@ def list(all, offset):
 @click.option('--name', '-n', type=click.STRING, required=True, help="Friendly name for the monitor")
 @click.option('--interval', '-i', type=click.INT, required=False, help="Interval in seconds")
 @click.option('--alerts', '-a', type=click.STRING, required=False, help="Alert contacts")
-def create(url, name, interval, alerts):
+def new_monitor(url, name, interval, alerts):
     payload = {
         'type': 1,
         'url': url,
@@ -101,17 +109,22 @@ def create(url, name, interval, alerts):
         exit(1)
 
 @app.command(help="Edit a monitor")
-@click.option('--id', '-i', type=click.STRING, required=True, help="The URL to monitor")
+@click.option('--id', '-i', type=click.STRING, required=True, help="The ID of the monitor")
 @click.option('--url', '-u', type=click.STRING, required=False, help="The URL to monitor")
 @click.option('--name', '-n', type=click.STRING, required=False, help="Friendly name for the monitor")
 @click.option('--interval', '-f', type=click.INT, required=False, help="Interval in seconds")
 @click.option('--alert_contacts', '-a', type=click.STRING, required=False, help="Alert contacts")
-def edit(id, name, url, interval, alert_contacts):
+def edit_monitor(id, name, url, interval, alert_contacts):
     payload = {
         'id': id
         }
     if name:  payload['friendly_name'] = name
-    if alert_contacts: payload['alert_contacts'] = alert_contacts
+    if alert_contacts:
+        if "," in alert_contacts:
+            alert_contacts = "-".join([ac + "_0_0" for ac in alert_contacts.split(",")])
+            payload['alert_contacts'] = alert_contacts
+        else:
+            payload['alert_contacts'] = alert_contacts + "_0_0"
     if interval:       payload['interval'] = interval
     if url:            payload['url'] = url
     data = _make_request(UPTIMEROBOT_API_EDIT_MONITOR, payload)
@@ -124,11 +137,47 @@ def edit(id, name, url, interval, alert_contacts):
 
 @app.command(help="Delete a monitor")
 @click.option('--id', '-i', type=click.STRING, required=True, help="The URL to monitor")
-def delete(id):
+def delete_monitor(id):
     payload = {
         'id': id
     }
     data = _make_request(UPTIMEROBOT_API_DELETE_MONITOR, payload)
+    if data['stat'] == 'ok':
+        exit(0)
+    else:
+        print("Failed")
+        exit(1)
+
+@app.command(help="Get Alert contacts")
+def get_alert_contacts():
+    payload = {}
+    data = _make_request(UPTIMEROBOT_API_GET_ALERT_CONTACTS, payload)
+    if data['stat'] == 'ok':
+        _data = []
+        _headers = ['id', 'friendly_name', 'value']
+
+        for ac in data['alert_contacts']:
+            _data.append([ac['id'], ac['friendly_name'], ac.get('value')])
+        
+        print(t(_data, headers=_headers, tablefmt="github"))
+        exit(0)
+    else:
+        print("Failed")
+        exit(1)
+        
+@app.command(help="Edit Alert contacts")
+@click.option('--id', '-i', type=click.STRING, required=True, help="ID of alert contact")
+@click.option('--name', '-n', type=click.STRING, required=False, help="Friendly name of alert contact")
+@click.option('--value', '-v', type=click.STRING, required=False, help="Value of alert contact")
+@click.option('--status', '-s', type=click.STRING, required=True, help="Status of alert contact")
+def edit_alert_contact(id, name, value, status):
+    payload = {
+        'id': id,
+        'status': status
+    }
+    if name: payload['friendly_name'] = name
+    if value: payload['value'] = value
+    data = _make_request(UPTIMEROBOT_API_EDIT_ALERT_CONTACTS, payload)
     if data['stat'] == 'ok':
         exit(0)
     else:

@@ -1,5 +1,7 @@
 # Uptime Robot CLI
 
+CLI that uses [UptimeRobot REST API](https://uptimerobot.com/api/)
+
 ## Install
 
 ```
@@ -23,16 +25,18 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  create  Create a monitor
-  delete  Delete a monitor
-  edit    Edit a monitor
-  list    List all monitors
+  delete-monitor      Delete a monitor
+  edit-alert-contact  Edit Alert contacts
+  edit-monitor        Edit a monitor
+  get-alert-contacts  Get Alert contacts
+  get-monitors        Get all monitors
+  new-monitor         Create a monitor
 ```
 
 ### List
 
 ```
-$ uptimerobot list
+$ uptimerobot get-monitors
 |        id | friendly_name    | url                        |   interval |
 |-----------|------------------|----------------------------|------------|
 | 785618397 | MY Frontend      | https://origin.example.com |        300 |
@@ -43,7 +47,7 @@ $ uptimerobot list
 ### Add
 
 ```
-$ uptimerobot add -u https://api.example.sg -n 'SG Backend' -i 600
+$ uptimerobot new-monitor -u https://api.example.sg -n 'SG Backend' -i 600
 785618400
 
 $ uptimerobot list
@@ -58,7 +62,7 @@ $ uptimerobot list
 ### Edit
 
 ```
-$ uptimerobot edit -i 785618400 -n 'SG API'
+$ uptimerobot edit-monitor -i 785618400 -n 'SG API'
 $ uptimerobot list
 |        id | friendly_name    | url                        |   interval |
 |-----------|------------------|----------------------------|------------|
@@ -71,11 +75,21 @@ $ uptimerobot list
 ### Delete
 
 ```
-$ uptimerobot delete -i 785618397
-$ uptimerobot delete -i 785618398
+$ uptimerobot delete-monitor -i 785618397
+$ uptimerobot delete-monitor -i 785618398
 $ uptimerobot list
 |        id | friendly_name    | url                        |   interval |
 |-----------|------------------|----------------------------|------------|
 | 785618399 | SG Frontend      | https://origin.example.sg  |        300 |
 | 785618400 | SG API           | https://api.example.sg     |        600 |
+```
+
+### Alert Contacts
+
+```
+$ uptimerobot get-alert-contacts
+|      id | friendly_name    | value        |
+|---------|------------------|--------------|
+| 1234567 | me@example.com   | John Doe     |
+| 1234568 | foo@bar.buzz     | Foo Bar      |
 ```

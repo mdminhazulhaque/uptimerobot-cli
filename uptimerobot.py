@@ -44,6 +44,9 @@ UPTIMEROBOT_API_DELETE_MONITOR = "/v2/deleteMonitor"
 UPTIMEROBOT_API_GET_ALERT_CONTACTS = "/v2/getAlertContacts"
 UPTIMEROBOT_API_EDIT_ALERT_CONTACTS = "/v2/editAlertContact"
 UPTIMEROBOT_PAGE_LEN = 50
+UPTIMEROBOT_ALERT_THRESHOLD = 1
+UPTIMEROBOT_ALERT_RECURRENCE = 5
+UPTIMEROBOT_ALERT_RULE = F"_{UPTIMEROBOT_ALERT_THRESHOLD}_{UPTIMEROBOT_ALERT_RECURRENCE}"
 
 def _make_request(api_endpoint, payload):
     payload['api_key'] = UPTIMEROBOT_API_KEY
@@ -121,10 +124,10 @@ def edit_monitor(id, name, url, interval, alert_contacts):
     if name:  payload['friendly_name'] = name
     if alert_contacts:
         if "," in alert_contacts:
-            alert_contacts = "-".join([ac + "_0_0" for ac in alert_contacts.split(",")])
+            alert_contacts = "-".join([ac + UPTIMEROBOT_ALERT_RULE for ac in alert_contacts.split(",")])
             payload['alert_contacts'] = alert_contacts
         else:
-            payload['alert_contacts'] = alert_contacts + "_0_0"
+            payload['alert_contacts'] = alert_contacts + UPTIMEROBOT_ALERT_RULE
     if interval:       payload['interval'] = interval
     if url:            payload['url'] = url
     data = _make_request(UPTIMEROBOT_API_EDIT_MONITOR, payload)
